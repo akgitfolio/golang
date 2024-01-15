@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: container-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: container-monitor
+  template:
+    metadata:
+      labels:
+        app: container-monitor
+    spec:
+      containers:
+        - name: container-monitor
+          image: your-docker-image
+          ports:
+            - containerPort: 9323

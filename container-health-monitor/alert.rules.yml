@@ -1,0 +1,11 @@
+groups:
+  - name: example
+    rules:
+      - alert: HighCPUUsage
+        expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (container_name) > 0.8
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "Container {{ $labels.container_name }} is using more than 80% CPU for the last minute."
