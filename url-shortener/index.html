@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Shortener</title>
+</head>
+<body>
+    <h1>URL Shortener</h1>
+    <form action="/shorten" method="post">
+        <label for="url">URL:</label>
+        <input type="text" id="url" name="url"><br><br>
+        <label for="alias">Custom Alias (optional):</label>
+        <input type="text" id="alias" name="alias"><br><br>
+        <label for="expiration">Expiration (e.g., 24h, 7d, 1m) (optional):</label>
+        <input type="text" id="expiration" name="expiration"><br><br>
+        <input type="submit" value="Shorten">
+    </form>
+</body>
+</html>
