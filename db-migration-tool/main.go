@@ -1,48 +1,40 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+	"database/sql"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-)
-
-var (
-	dbURL         = "postgres://user:password@localhost:5432/mydb?sslmode=disable"
-	migrationsDir = "file://db/migrations"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq" // Import the PostgreSQL driver
 )
 
 func main() {
-	action := flag.String("action", "up", "Migration action: up, down, or version")
-	steps := flag.Int("steps", 1, "Number of steps to migrate")
-	flag.Parse()
-
-	m, err := migrate.New(migrationsDir, dbURL)
+	db, err := sql.Open("postgres", "postgres://user:password@host:port/database_name?sslmode=disable")
 	if err != nil {
-		log.Fatalf("Failed to create migrate instance: %v", err)
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+	defer db.Close()
+
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("Failed to create the migration driver: %v", err)
 	}
 
-	switch *action {
-	case "up":
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-			log.Fatalf("Failed to apply migrations: %v", err)
-		}
-		fmt.Println("Migrations applied successfully.")
-	case "down":
-		if err := m.Steps(-*steps); err != nil && err != migrate.ErrNoChange {
-			log.Fatalf("Failed to revert migrations: %v", err)
-		}
-		fmt.Println("Migrations reverted successfully.")
-	case "version":
-		version, dirty, err := m.Version()
-		if err != nil {
-			log.Fatalf("Failed to get migration version: %v", err)
-		}
-		fmt.Printf("Current migration version: %d, dirty: %v\n", version, dirty)
-	default:
-		log.Fatalf("Unknown action: %s", *action)
+	source, err := file.New("file://./migrations")
+	if err != nil {
+		log.Fatalf("Failed to create the migration source: %v", err)
 	}
+
+	m, err := migrate.NewWithInstance("file", source, "postgres", driver)
+	if err != nil {
+		log.Fatalf("Failed to create the migration instance: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply the migrations: %v", err)
+	}
+
+	log.Println("Migrations applied successfully!")
 }
