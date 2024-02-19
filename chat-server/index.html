@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Playlist WebSocket</title>
+</head>
+<body>
+    <input type="text" id="song-name" placeholder="Song Name">
+    <button id="add-button">Add Song</button>
+    <div id="playlist"></div>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8080/ws");
+
+        const songNameInput = document.getElementById("song-name");
+        const addButton = document.getElementById("add-button");
+        const playlistContainer = document.getElementById("playlist");
+
+        function createPlaylistItem(item) {
+            const itemElement = document.createElement("div");
+            itemElement.textContent = `${item.song_name} - Votes: ${item.votes}`;
+            const voteButton = document.createElement("button");
+            voteButton.textContent = "Vote";
+            voteButton.onclick = () => {
+                socket.send(JSON.stringify({ type: "vote", payload: { song_name: item.song_name, votes: 1 } }));
+            };
+            itemElement.appendChild(voteButton);
+            return itemElement;
+        }
+
+        socket.onmessage = function (event) {
+            const playlistData = JSON.parse(event.data);
+            playlistContainer.innerHTML = "";
+            for (const item of playlistData) {
+                playlistContainer.appendChild(createPlaylistItem(item));
+            }
+        };
+
+        addButton.addEventListener("click", function () {
+            const songName = songNameInput.value.trim();
+            if (songName !== "") {
+                socket.send(JSON.stringify({ type: "add", payload: { song_name: songName, votes: 0 } }));
+                songNameInput.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
